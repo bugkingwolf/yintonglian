@@ -1,0 +1,21 @@
+# 用真实域名和证书路径替换占位内容后使用。
+server {
+    listen 443 ssl;
+    server_name showcase.example.com;
+    ssl_certificate /etc/letsencrypt/live/showcase.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/showcase.example.com/privkey.pem;
+    client_max_body_size 300m;
+    location / {
+        proxy_pass http://127.0.0.1:4317;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_http_version 1.1;
+        proxy_request_buffering off;
+        proxy_read_timeout 600s;
+    }
+}
+server {
+    listen 80;
+    server_name showcase.example.com;
+    return 301 https://$host$request_uri;
+}

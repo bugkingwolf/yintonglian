@@ -1,0 +1,279 @@
+{
+  "cases": [
+    {
+      "id": "life-forward",
+      "title": "生活正向前",
+      "clientId": "icbc",
+      "categoryId": "content",
+      "type": "video",
+      "summary": "以普通人的成长故事，传递品牌温度。",
+      "description": "2023年，银通联为中国工商银行信用卡中心制作《生活正向前》品牌宣传片，以平凡人的经历与成长传达品牌形象。",
+      "cover": "/assets/life-forward.jpg",
+      "gallery": [
+        "/assets/life-confetti.jpg",
+        "/assets/life-farmers.jpg",
+        "/assets/life-outdoor.jpg",
+        "/assets/life-people.jpg"
+      ],
+      "video": "",
+      "experienceUrl": "",
+      "services": [
+        "创意策划",
+        "拍摄制作",
+        "后期包装"
+      ],
+      "featured": true,
+      "hero": true,
+      "status": "published",
+      "order": 10,
+      "demo": true,
+      "updatedAt": "2026-10-13T08:01:04.178Z"
+    },
+    {
+      "id": "thinkbook",
+      "title": "ThinkBook创意内容",
+      "clientId": "lenovo",
+      "categoryId": "marketing",
+      "type": "video",
+      "summary": "让科技产品的故事，拥有鲜明的创意表达。",
+      "description": "银通联为ThinkBook官方抖音提供内容创作与账号运营服务，包含创意策划、日常运营与视频内容制作。",
+      "cover": "/assets/thinkbook.jpg",
+      "gallery": [
+        "/assets/thinkbook-basketball.jpg",
+        "/assets/thinkbook-stage.jpg"
+      ],
+      "video": "",
+      "experienceUrl": "",
+      "services": [
+        "内容策划",
+        "视频创意",
+        "新媒体运营"
+      ],
+      "featured": true,
+      "hero": false,
+      "status": "published",
+      "order": 20,
+      "demo": true,
+      "updatedAt": "2026-10-13T08:01:04.182Z"
+    },
+    {
+      "id": "minsheng-design",
+      "title": "民生信用卡创意视觉",
+      "clientId": "minsheng",
+      "categoryId": "content",
+      "type": "graphic",
+      "summary": "以多元化创意设计，呈现产品与生活方式。",
+      "description": "为民生信用卡提供卡面定制、产品海报、H5及相关页面设计，从产品特点到生活方式，输出多种形式的视觉内容。",
+      "cover": "/assets/minsheng-blue.jpg",
+      "gallery": [
+        "/assets/minsheng-blue.jpg",
+        "/assets/minsheng-orange.jpg",
+        "/assets/minsheng-food.jpg"
+      ],
+      "video": "",
+      "experienceUrl": "",
+      "services": [
+        "卡面设计",
+        "产品海报",
+        "视觉创意"
+      ],
+      "featured": true,
+      "hero": false,
+      "status": "published",
+      "order": 30,
+      "demo": true,
+      "updatedAt": "2026-10-13T08:01:04.182Z"
+    },
+    {
+      "id": "cicc-paint",
+      "title": "儿童节绘画互动",
+      "clientId": "cicc",
+      "categoryId": "technology",
+      "type": "h5",
+      "summary": "给你一支画笔，你会给世界添上什么颜色？",
+      "description": "儿童节主题H5互动，以绘画体验呈现创意内容。本版保留PPT中的项目画面，体验链接待补充。",
+      "cover": "/assets/cicc-paint.jpg",
+      "gallery": [
+        "/assets/cicc-paint.jpg"
+      ],
+      "video": "",
+      "experienceUrl": "",
+      "services": [
+        "H5创意",
+        "交互设计",
+        "开发制作"
+      ],
+      "featured": true,
+      "hero": false,
+      "status": "published",
+      "order": 40,
+      "demo": true,
+      "updatedAt": "2026-10-13T08:01:04.182Z"
+    },
+    {
+      "id": "icbc-car",
+      "title": "车主主题互动",
+      "clientId": "icbc",
+      "categoryId": "technology",
+      "type": "h5",
+      "summary": "以互动体验，呈现车主服务与产品特点。",
+      "description": "工商银行信用卡车主主题创意互动，围绕加油、洗车、停车等车主服务进行数字化呈现。体验链接待补充。",
+      "cover": "/assets/icbc-car.jpg",
+      "gallery": [
+        "/assets/icbc-car.jpg"
+      ],
+      "video": "",
+      "experienceUrl": "",
+      "services": [
+        "H5创意",
+        "视觉设计",
+        "互动体验"
+      ],
+      "featured": false,
+      "hero": false,
+      "status": "published",
+      "order": 50,
+      "demo": true,
+      "updatedAt": "2026-10-13T08:01:04.182Z"
+    },
+    {
+      "id": "icbc-social",
+      "title": "信用卡创意长图",
+      "clientId": "icbc",
+      "categoryId": "marketing",
+      "type": "graphic",
+      "summary": "用丰富的视觉语言，把产品信息变成易读的内容。",
+      "description": "围绕工商银行信用卡的新媒体内容，提供创意长图、封面与传播物料的视觉设计。",
+      "cover": "/assets/icbc-spring.jpg",
+      "gallery": [
+        "/assets/icbc-spring.jpg",
+        "/assets/icbc-newyear.jpg"
+      ],
+      "video": "",
+      "experienceUrl": "",
+      "services": [
+        "新媒体内容",
+        "创意设计",
+        "图文制作"
+      ],
+      "featured": false,
+      "hero": false,
+      "status": "published",
+      "order": 60,
+      "demo": true,
+      "updatedAt": "2026-10-13T08:01:04.182Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": "marketing",
+      "name": "数字化营销服务",
+      "subtitle": "品牌传播与新媒体运营",
+      "description": "以新媒体运营为核心，提供整合营销、公关服务与品牌传播。",
+      "services": [
+        "新媒体运营",
+        "整合营销",
+        "公关服务"
+      ],
+      "order": 10
+    },
+    {
+      "id": "content",
+      "name": "数字化内容创作",
+      "subtitle": "把品牌故事变成好内容",
+      "description": "从视频创意到视觉设计，以内容表达品牌，让每一次沟通更有价值。",
+      "services": [
+        "视频制作",
+        "视觉设计",
+        "音乐创作",
+        "活动与演出"
+      ],
+      "order": 20
+    },
+    {
+      "id": "technology",
+      "name": "数字化技术服务",
+      "subtitle": "让内容成为互动体验",
+      "description": "通过H5、小游戏与数字互动，为品牌连接用户，创造可参与的体验。",
+      "services": [
+        "H5互动",
+        "小游戏",
+        "虚拟场景"
+      ],
+      "order": 30
+    }
+  ],
+  "clients": [
+    {
+      "id": "icbc",
+      "name": "工商银行",
+      "order": 10
+    },
+    {
+      "id": "minsheng",
+      "name": "民生银行",
+      "order": 20
+    },
+    {
+      "id": "lenovo",
+      "name": "联想",
+      "order": 30
+    },
+    {
+      "id": "tcl",
+      "name": "TCL",
+      "order": 40
+    },
+    {
+      "id": "cicc",
+      "name": "中金公司",
+      "order": 50
+    },
+    {
+      "id": "guangfa",
+      "name": "广发银行",
+      "order": 60
+    }
+  ],
+  "company": {
+    "name": "银通联",
+    "english": "MEDIA BANK",
+    "legalName": "银通联科技（北京）有限公司",
+    "headline": "用新媒体内容\n创造品牌价值",
+    "slogan": "协力合作 联通未来",
+    "introduction": "成立于2014年，银通联专注数字内容运营与品牌营销。以创意、内容与技术，为客户创造媒体内容资产与长期价值。",
+    "vision": "为客户实现长期价值，以新媒体技术优势获取新价值，以精准有效的互动传播实现新成长。",
+    "philosophy": "MediaBANK：用新媒体内容创造价值，像管理资产一样积累与运营品牌内容。",
+    "team": "汇集创意策划、视频制作、视觉设计、新媒体运营与技术开发团队，为客户提供内容策划到执行落地的服务。",
+    "qualifications": "资质与荣誉图片可在后台补充。",
+    "qualificationImages": [],
+    "phone": "4008-125521",
+    "email": "",
+    "address": "北京市朝阳区北辰汇园大厦G座14层",
+    "contactNote": "联系方式来自公司介绍，上线前请确认。",
+    "founded": "2014",
+    "homeFeaturedLimit": 4
+  },
+  "platforms": [
+    {
+      "id": "geo",
+      "name": "GEO平台",
+      "subtitle": "生成式引擎优化服务",
+      "description": "进入现有GEO系统，按平台要求登录并使用相关服务。",
+      "url": "",
+      "mobileUrl": "",
+      "enabled": true,
+      "order": 10
+    },
+    {
+      "id": "comic",
+      "name": "漫剧制作平台",
+      "subtitle": "创作与管理入口",
+      "description": "进入已有漫剧系统，制作与管理漫剧项目。",
+      "url": "",
+      "mobileUrl": "",
+      "enabled": true,
+      "order": 20
+    }
+  ]
+}

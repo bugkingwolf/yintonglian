@@ -1,0 +1,5 @@
+{
+ "name":"yintonglian-frontend-tools","version":"0.2.0","private":true,"type":"module",
+ "description":"可选前端检查工具；Go服务运行不依赖Node.js",
+ "scripts":{"start":"go run ./cmd/yintonglian","test":"go test ./...","test:ui":"node --test test/*.test.mjs","check":"node scripts/check.mjs","preview:offline":"node scripts/make-preview.mjs","init-admin":"go run ./cmd/yintonglian init-admin","backup":"go run ./cmd/yintonglian backup"}
+}

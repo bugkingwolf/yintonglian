@@ -1,0 +1,7 @@
+{
+  "password": "legacy-test-password-123",
+  "hash": "00112233445566778899aabbccddeeff:900f0750fbbe5274833997f5cefc3ccc7b7e015d1c6c216f56166842e353e942c073d6c5c6dcbac351ebadbcb0694bc8ef6fb9717238e850f7291409525c3bef",
+  "token": "synthetic-legacy-session",
+  "digest": "6003108242f7c011545edd7089cb4d1e60df6201c2e551c2c8a9b06f3f0aecd6",
+  "csrf": "synthetic-legacy-csrf"
+}

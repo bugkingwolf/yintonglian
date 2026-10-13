@@ -1,0 +1,10 @@
+.data/
+.env
+*.log
+node_modules/
+.DS_Store
+
+backups/
+
+bin/
+/yintonglian

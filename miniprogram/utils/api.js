@@ -1,0 +1,7 @@
+const settings=require('../config');
+function request(path){return new Promise((resolve,reject)=>wx.request({url:settings.API_BASE+path,method:'GET',success(res){if(res.statusCode>=200&&res.statusCode<300)resolve(res.data);else reject(new Error(res.data.error||'加载失败'));},fail(){reject(new Error('连接暂不可用，请稍后重试。'));}}));}
+function media(value){return value&&value.startsWith('/')?settings.API_BASE+value:value;}
+async function content(){const [config,list]=await Promise.all([request('/api/public/config'),request('/api/public/cases')]);config.company.qualificationImages=(config.company.qualificationImages||[]).map(media);const items=list.items.map(c=>({...c,cover:media(c.cover),gallery:c.gallery.map(media),video:media(c.video),clientName:config.clients.find(x=>x.id===c.clientId)?.name||'银通联项目',categoryName:config.categories.find(x=>x.id===c.categoryId)?.name||'业务案例',typeName:{video:'视频',graphic:'图文',h5:'H5互动',mixed:'整合案例'}[c.type]}));return {config,items};}
+function contact(company){if(company.phone)wx.showModal({title:'联系银通联',content:(company.phone||'')+'\n'+(company.address||''),confirmText:'拨打电话',success(r){if(r.confirm)wx.makePhoneCall({phoneNumber:company.phone.replace(/[^\d+]/g,'')});}});else wx.showModal({title:'联系银通联',content:company.address||'联系方式待补充',showCancel:false});}
+function openCases(filter){getApp().globalData.pendingFilter=filter||{};wx.switchTab({url:'/pages/cases/index'});}
+module.exports={request,media,content,contact,openCases};

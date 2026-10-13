@@ -1,0 +1,1 @@
+.video,.detail-cover{width:100%;height:385rpx;background:#20251f;border-radius:5rpx}.project-image{display:block;width:100%;margin-bottom:22rpx;border-radius:4rpx}.row .button{flex:1}.title{font-size:46rpx}.nav-row{font-size:24rpx}.nav-row .muted{white-space:nowrap}
