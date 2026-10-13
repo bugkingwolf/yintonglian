@@ -1,2 +1,3 @@
 .qualification{display:block;width:100%;margin:20rpx 0}.section-head{margin-top:25rpx}.title{font-size:52rpx}
 .person-card{display:flex;align-items:flex-start;gap:24rpx;background:#fff;border:1rpx solid #e6e1d7;padding:24rpx;margin:20rpx 0}.person-photo{width:150rpx;height:200rpx;flex-shrink:0;background:#f4f1e9}.person-info{flex:1;min-width:0}.person-role{font-size:21rpx;color:#9a712d;line-height:1.6}.person-name{font-size:34rpx;margin:8rpx 0 14rpx;font-weight:600}.person-bio{font-size:23rpx;color:#777970;line-height:1.9;white-space:pre-line}
+.execution-person .person-photo{width:112rpx;height:112rpx;border-radius:50%}

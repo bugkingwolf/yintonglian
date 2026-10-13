@@ -81,3 +81,7 @@
 @media(max-width:1050px){.management .person-card{grid-template-columns:135px 1fr}.people-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.person-info{padding:18px}}
 @media(max-width:700px){.team-section{padding:10px 0 40px}.team-section .section-heading{display:block}.team-section .section-heading>p{font-size:12px;margin-top:12px}.team-group{margin-top:28px}.people-grid,.people-grid.management{grid-template-columns:1fr;gap:16px}.management .person-card,.execution .person-card{display:grid;grid-template-columns:105px 1fr}.management .person-photo{min-height:220px}.execution .person-photo{height:100%;aspect-ratio:auto;min-height:150px}.person-info,.execution .person-info{padding:18px 16px}.person-info h3{font-size:23px;margin-bottom:10px}.person-bio{font-size:11px}.person-role{font-size:10px}.execution .person-role{min-height:0}}
 @media(max-width:700px){.management .person-photo{height:160px;min-height:0;align-self:start}.execution .person-photo{height:105px;min-height:0;align-self:start}}
+/* Keep management portraits prominent; execution profiles use compact avatars. */
+.execution .person-photo{width:112px;height:112px;min-height:0;aspect-ratio:auto;margin:24px auto 0;background:transparent;border-radius:50%;overflow:hidden}
+.execution .person-photo img{object-fit:contain;background:transparent}
+@media(max-width:700px){.execution .person-card{grid-template-columns:80px 1fr}.execution .person-photo{width:72px;height:72px;margin:18px auto 0;align-self:start}}
