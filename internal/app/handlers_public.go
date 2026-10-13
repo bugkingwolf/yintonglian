@@ -17,6 +17,14 @@ func (a *Server) publicConfig(w http.ResponseWriter, r *http.Request) error {
 			enabled = append(enabled, p)
 		}
 	}
+	members := make([]TeamMember, 0)
+	for _, m := range d.Company.TeamMembers {
+		if m.Enabled {
+			members = append(members, m)
+		}
+	}
+	sort.SliceStable(members, func(i, j int) bool { return members[i].Order < members[j].Order })
+	d.Company.TeamMembers = members
 	return respond(w, 200, map[string]any{"categories": d.Categories, "clients": d.Clients, "company": d.Company, "platforms": enabled})
 }
 func (a *Server) published() ([]Case, error) {

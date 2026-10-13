@@ -33,25 +33,36 @@ type Case struct {
 	Order         int      `json:"order"`
 	UpdatedAt     string   `json:"updatedAt"`
 }
+type TeamMember struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Role      string `json:"role"`
+	Group     string `json:"group"`
+	Photo     string `json:"photo"`
+	Biography string `json:"biography"`
+	Order     int    `json:"order"`
+	Enabled   bool   `json:"enabled"`
+}
 type Company struct {
-	ID                  string   `json:"id"`
-	Name                string   `json:"name"`
-	English             string   `json:"english"`
-	LegalName           string   `json:"legalName"`
-	Headline            string   `json:"headline"`
-	Slogan              string   `json:"slogan"`
-	Introduction        string   `json:"introduction"`
-	Vision              string   `json:"vision"`
-	Philosophy          string   `json:"philosophy"`
-	Team                string   `json:"team"`
-	Qualifications      string   `json:"qualifications"`
-	QualificationImages []string `json:"qualificationImages"`
-	Phone               string   `json:"phone"`
-	Email               string   `json:"email"`
-	Address             string   `json:"address"`
-	ContactNote         string   `json:"contactNote"`
-	Founded             string   `json:"founded"`
-	HomeFeaturedLimit   int      `json:"homeFeaturedLimit"`
+	ID                  string       `json:"id"`
+	Name                string       `json:"name"`
+	English             string       `json:"english"`
+	LegalName           string       `json:"legalName"`
+	Headline            string       `json:"headline"`
+	Slogan              string       `json:"slogan"`
+	Introduction        string       `json:"introduction"`
+	Vision              string       `json:"vision"`
+	Philosophy          string       `json:"philosophy"`
+	Team                string       `json:"team"`
+	TeamMembers         []TeamMember `json:"teamMembers"`
+	Qualifications      string       `json:"qualifications"`
+	QualificationImages []string     `json:"qualificationImages"`
+	Phone               string       `json:"phone"`
+	Email               string       `json:"email"`
+	Address             string       `json:"address"`
+	ContactNote         string       `json:"contactNote"`
+	Founded             string       `json:"founded"`
+	HomeFeaturedLimit   int          `json:"homeFeaturedLimit"`
 }
 type Platform struct {
 	ID          string `json:"id"`

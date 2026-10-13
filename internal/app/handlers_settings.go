@@ -140,6 +140,49 @@ func (a *Server) saveCompany(w http.ResponseWriter, r *http.Request) error {
 			c.QualificationImages = append(c.QualificationImages, v)
 		}
 	}
+
+	if raw, ok := changes["teamMembers"]; ok {
+		var members []TeamMember
+		if string(raw) == "null" || json.Unmarshal(raw, &members) != nil || len(members) > 50 {
+			return bad(400, "团队成员需为列表，最多50人")
+		}
+		seen := map[string]bool{}
+		for i := range members {
+			m := &members[i]
+			if m.ID == "" {
+				m.ID, err = newID()
+				if err != nil {
+					return err
+				}
+			}
+			if !idPattern.MatchString(m.ID) || seen[m.ID] {
+				return bad(400, "团队成员标识无效或重复")
+			}
+			seen[m.ID] = true
+			if m.Name, err = clean(m.Name, 80); err != nil {
+				return err
+			}
+			if m.Role, err = clean(m.Role, 120); err != nil {
+				return err
+			}
+			if m.Name == "" || m.Role == "" {
+				return bad(400, "请填写成员姓名和职位")
+			}
+			if m.Group != "management" && m.Group != "execution" {
+				return bad(400, "请选择管理团队或执行团队")
+			}
+			if m.Biography, err = clean(m.Biography, 5000); err != nil {
+				return err
+			}
+			if m.Photo, err = a.mediaValue(m.Photo, "image"); err != nil {
+				return err
+			}
+			if err = validOrder(m.Order); err != nil {
+				return err
+			}
+		}
+		c.TeamMembers = members
+	}
 	if raw, ok := changes["homeFeaturedLimit"]; ok {
 		if json.Unmarshal(raw, &c.HomeFeaturedLimit) != nil || c.HomeFeaturedLimit < 1 || c.HomeFeaturedLimit > 12 {
 			return bad(400, "精选数量需为1至12")

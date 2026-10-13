@@ -95,6 +95,10 @@ func OpenStore(dataDir string) (*Store, error) {
 			return nil, err
 		}
 	}
+	if err = s.seedTeamMembers(); err != nil {
+		db.Close()
+		return nil, err
+	}
 	_ = os.Chmod(filepath.Join(abs, "content.sqlite"), 0600)
 	return s, nil
 }
@@ -260,4 +264,28 @@ func (s *Store) Close() error {
 		return err
 	}
 	return db.Close()
+}
+
+// Add PPT team data once for legacy content. An explicit empty array remains empty.
+func (s *Store) seedTeamMembers() error {
+	record, err := getRow[map[string]json.RawMessage](s.DB, "settings", "company")
+	if err == gorm.ErrRecordNotFound {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if _, exists := record["teamMembers"]; exists {
+		return nil
+	}
+	var defaults Snapshot
+	if err = json.Unmarshal(seedJSON, &defaults); err != nil {
+		return err
+	}
+	raw, err := json.Marshal(defaults.Company.TeamMembers)
+	if err != nil {
+		return err
+	}
+	record["teamMembers"] = raw
+	return putRow(s.DB, "settings", record)
 }

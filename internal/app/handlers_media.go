@@ -144,7 +144,15 @@ func (a *Server) mediaPublished(url string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return slices.Contains(company.QualificationImages, url), nil
+	if slices.Contains(company.QualificationImages, url) {
+		return true, nil
+	}
+	for _, m := range company.TeamMembers {
+		if m.Enabled && m.Photo == url {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 func (a *Server) media(w http.ResponseWriter, r *http.Request) error {
 	name := r.PathValue("filename")
@@ -192,6 +200,11 @@ func (a *Server) deleteUpload(w http.ResponseWriter, r *http.Request) error {
 	}
 	if slices.Contains(company.QualificationImages, url) {
 		return bad(409, "该文件被内容引用，请先移除引用")
+	}
+	for _, m := range company.TeamMembers {
+		if m.Photo == url {
+			return bad(409, "该文件被团队成员引用，请先移除引用")
+		}
 	}
 	if err = os.Remove(filepath.Join(a.Store.DataDir, "uploads", x.Filename)); err != nil && !os.IsNotExist(err) {
 		return err

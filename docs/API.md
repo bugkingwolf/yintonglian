@@ -26,3 +26,5 @@
 | GET /api/admin/export | 导出内容，排除认证信息 |
 
 错误统一返回JSON `{ "error": "说明" }`。令牌不会作为URL参数传输。公开接口不允许客户端绕过发布状态筛选。
+
+公司配置新增 `teamMembers` 数组（管理团队 `management`、执行团队 `execution`）。GET /api/public/config仅返回enabled成员并按order排序；管理员内容接口保留全部。PUT /api/admin/company支持整组更新，姓名、职位必填，最多50人；photo为系统图片地址，id空时自动生成。其他公司字段未提交时保持不变。
