@@ -1,12 +1,13 @@
 package app
 
 import (
+	"context"
 	"gorm.io/gorm"
 	"net/http"
 	"time"
 )
 
-func (a *Server) normalizeCase(c Case, id string) (Case, error) {
+func (a *Server) normalizeCase(ctx context.Context, c Case, id string) (Case, error) {
 	var err error
 	c.ID = id
 	c.Title, err = clean(c.Title, 120)
@@ -40,7 +41,7 @@ func (a *Server) normalizeCase(c Case, id string) (Case, error) {
 	default:
 		return c, bad(400, "请选择发布状态")
 	}
-	if c.Cover, err = a.mediaValue(c.Cover, "image"); err != nil {
+	if c.Cover, err = a.mediaValue(ctx, c.Cover, "image"); err != nil {
 		return c, err
 	}
 	if c.Status == "published" && c.Cover == "" {
@@ -53,11 +54,11 @@ func (a *Server) normalizeCase(c Case, id string) (Case, error) {
 		c.Gallery = []string{}
 	}
 	for i, src := range c.Gallery {
-		if c.Gallery[i], err = a.mediaValue(src, "image"); err != nil {
+		if c.Gallery[i], err = a.mediaValue(ctx, src, "image"); err != nil {
 			return c, err
 		}
 	}
-	if c.Video, err = a.mediaValue(c.Video, "video"); err != nil {
+	if c.Video, err = a.mediaValue(ctx, c.Video, "video"); err != nil {
 		return c, err
 	}
 	if c.ExperienceURL, err = safeLink(c.ExperienceURL); err != nil {
@@ -98,7 +99,7 @@ func (a *Server) saveCase(w http.ResponseWriter, r *http.Request) error {
 	if err = decode(w, r, &value); err != nil {
 		return err
 	}
-	value, err = a.normalizeCase(value, id)
+	value, err = a.normalizeCase(r.Context(), value, id)
 	if err != nil {
 		return err
 	}

@@ -54,7 +54,7 @@ func OpenStore(dataDir string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err = os.MkdirAll(filepath.Join(abs, "uploads"), 0700); err != nil {
+	if err = os.MkdirAll(abs, 0700); err != nil {
 		return nil, err
 	}
 	u := url.URL{Scheme: "file", Path: filepath.Join(abs, "content.sqlite")}

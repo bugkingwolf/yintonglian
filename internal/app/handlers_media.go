@@ -1,9 +1,11 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"gorm.io/gorm"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -34,7 +36,7 @@ func detectMedia(header []byte) (mediaType, bool) {
 	}
 	return mediaType{}, false
 }
-func (a *Server) mediaValue(value, kind string) (string, error) {
+func (a *Server) mediaValue(ctx context.Context, value, kind string) (string, error) {
 	v, err := clean(value, 512)
 	if err != nil {
 		return "", err
@@ -50,8 +52,10 @@ func (a *Server) mediaValue(value, kind string) (string, error) {
 		if uploadPattern.MatchString(name) {
 			file, err := a.Store.Upload(name)
 			if err == nil && strings.HasPrefix(file.MIME, kind+"/") {
-				if info, e := os.Stat(filepath.Join(a.Store.DataDir, "uploads", file.Filename)); e == nil && info.Mode().IsRegular() {
+				if _, e := a.Files.Stat(ctx, file.Filename); e == nil {
 					return v, nil
+				} else if !errors.Is(e, fs.ErrNotExist) {
+					return "", e
 				}
 			} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 				return "", err
@@ -79,13 +83,12 @@ func (a *Server) upload(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	dir := filepath.Join(a.Store.DataDir, "uploads")
-	tmp := filepath.Join(dir, id+".tmp")
-	f, err := os.OpenFile(tmp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
+	// A private temporary spool validates bytes before they enter persistent storage.
+	f, err := os.CreateTemp("", "yintonglian-upload-*")
 	if err != nil {
 		return err
 	}
-	defer os.Remove(tmp)
+	defer os.Remove(f.Name())
 	defer f.Close()
 	body := http.MaxBytesReader(w, r.Body, a.cfg.MaxUpload)
 	defer body.Close()
@@ -112,17 +115,20 @@ func (a *Server) upload(w http.ResponseWriter, r *http.Request) error {
 	if kind.Kind == "image" && size > 20*1024*1024 {
 		return bad(413, "图片不能超过20MB")
 	}
-	if err = f.Close(); err != nil {
+	if _, err = f.Seek(0, io.SeekStart); err != nil {
 		return err
 	}
 	filename := id + "." + kind.Extension
-	dest := filepath.Join(dir, filename)
-	if err = os.Rename(tmp, dest); err != nil {
+	if err = a.Files.Put(r.Context(), filename, f); err != nil {
 		return err
 	}
 	err = a.Store.DB.Create(&Upload{ID: id, Filename: filename, MIME: kind.MIME, Size: size, OriginalName: original, CreatedAt: time.Now().UnixMilli()}).Error
 	if err != nil {
-		os.Remove(dest)
+		cleanup, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), 30*time.Second)
+		defer cancel()
+		if cleanupErr := a.Files.Delete(cleanup, filename); cleanupErr != nil {
+			return errors.Join(err, cleanupErr)
+		}
 		return err
 	}
 	return respond(w, 201, map[string]any{"id": id, "url": "/media/" + filename, "mime": kind.MIME, "size": size, "name": original})
@@ -176,7 +182,31 @@ func (a *Server) media(w http.ResponseWriter, r *http.Request) error {
 			return bad(404, "文件不存在")
 		}
 	}
-	return serveFile(w, r, filepath.Join(a.Store.DataDir, "uploads", file.Filename), file.MIME, "private, no-store")
+	if delivery, ok := a.Files.(SignedMediaStorage); ok {
+		target, err := delivery.SignedURL(r.Context(), file.Filename, r.Method, 5*time.Minute)
+		if err != nil {
+			return err
+		}
+		parsed, err := url.Parse(target)
+		if err != nil || parsed.Scheme != "https" || parsed.Hostname() == "" || parsed.User != nil {
+			return errors.New("storage returned invalid HTTPS delivery URL")
+		}
+		w.Header().Set("Cache-Control", "private, no-store")
+		http.Redirect(w, r, target, http.StatusTemporaryRedirect)
+		return nil
+	}
+	object, err := a.Files.Open(r.Context(), file.Filename)
+	if errors.Is(err, fs.ErrNotExist) {
+		return bad(404, "文件不存在")
+	}
+	if err != nil {
+		return err
+	}
+	defer object.Close()
+	w.Header().Set("Content-Type", file.MIME)
+	w.Header().Set("Cache-Control", "private, no-store")
+	http.ServeContent(w, r, file.Filename, object.Modified, object)
+	return nil
 }
 func (a *Server) deleteUpload(w http.ResponseWriter, r *http.Request) error {
 	var x Upload
@@ -206,7 +236,7 @@ func (a *Server) deleteUpload(w http.ResponseWriter, r *http.Request) error {
 			return bad(409, "该文件被团队成员引用，请先移除引用")
 		}
 	}
-	if err = os.Remove(filepath.Join(a.Store.DataDir, "uploads", x.Filename)); err != nil && !os.IsNotExist(err) {
+	if err = a.Files.Delete(r.Context(), x.Filename); err != nil {
 		return err
 	}
 	if err = a.Store.DB.Where("id = ?", x.ID).Delete(&Upload{}).Error; err != nil {

@@ -114,3 +114,7 @@ SQLite快照与上传文件同时保留。备份包括管理员哈希和会话�
 业务读写采用GORM的Find、Take、Create、Update、Delete、OnConflict及显式事务。底层连接继续使用modernc驱动，仍支持CGO_ENABLED=0；GORM SQLite方言通过Conn接入已有连接，不使用默认CGO驱动。表结构沿用已有版本，内容JSON payload本轮不拆表；保留显式DDL以维持外键、状态与管理员约束，不对存量数据库直接运行AutoMigrate。SQLite专用VACUUM INTO备份仍使用参数化SQL。
 
 详见 [GORM改造说明](docs/GORM-MIGRATION.md)。
+
+## 文件存储
+
+用户上传由统一FileStorage接口管理，默认仍放在 `.data/uploads`，原数据和 `/media/` 地址保持兼容。上传、读取、删除与备份均经过该接口，已预留鉴权后的短时签名直链交付能力。当前没有接入真实OSS，也无需配置云账号。详见 [存储设计](docs/STORAGE.md)。

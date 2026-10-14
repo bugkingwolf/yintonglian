@@ -130,7 +130,7 @@ func (a *Server) saveCompany(w http.ResponseWriter, r *http.Request) error {
 		}
 		c.QualificationImages = make([]string, 0, len(images))
 		for _, src := range images {
-			v, err := a.mediaValue(src, "image")
+			v, err := a.mediaValue(r.Context(), src, "image")
 			if err != nil {
 				return err
 			}
@@ -174,7 +174,7 @@ func (a *Server) saveCompany(w http.ResponseWriter, r *http.Request) error {
 			if m.Biography, err = clean(m.Biography, 5000); err != nil {
 				return err
 			}
-			if m.Photo, err = a.mediaValue(m.Photo, "image"); err != nil {
+			if m.Photo, err = a.mediaValue(r.Context(), m.Photo, "image"); err != nil {
 				return err
 			}
 			if err = validOrder(m.Order); err != nil {

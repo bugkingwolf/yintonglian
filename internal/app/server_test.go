@@ -33,7 +33,11 @@ func projectRoot() string {
 }
 func newHarness(t *testing.T) *harness {
 	t.Helper()
-	a, err := New(Config{Root: projectRoot(), DataDir: t.TempDir()})
+	return newStorageHarness(t, nil)
+}
+func newStorageHarness(t *testing.T, files FileStorage) *harness {
+	t.Helper()
+	a, err := New(Config{Root: projectRoot(), DataDir: t.TempDir(), FileStorage: files})
 	if err != nil {
 		t.Fatal(err)
 	}

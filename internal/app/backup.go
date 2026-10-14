@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -49,25 +50,30 @@ func (a *Server) Backup(destination string) error {
 		if !uploadPattern.MatchString(f.Filename) {
 			return fmt.Errorf("invalid stored file name")
 		}
-		if err = copyFile(filepath.Join(source, "uploads", f.Filename), filepath.Join(uploadDest, f.Filename)); err != nil {
+		if err = a.backupObject(f.Filename, filepath.Join(uploadDest, f.Filename)); err != nil {
 			return err
 		}
 	}
 	return nil
 }
-func copyFile(source, destination string) error {
-	src, err := os.Open(source)
+func (a *Server) backupObject(key, destination string) error {
+	object, err := a.Files.Open(context.Background(), key)
 	if err != nil {
 		return err
 	}
-	defer src.Close()
+	defer object.Close()
 	dest, err := os.OpenFile(destination, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
 	if err != nil {
 		return err
 	}
-	if _, err = io.Copy(dest, src); err != nil {
+	n, err := io.Copy(dest, object)
+	if err != nil {
 		dest.Close()
 		return err
+	}
+	if n != object.Size {
+		dest.Close()
+		return fmt.Errorf("incomplete backup for %s", key)
 	}
 	return dest.Close()
 }

@@ -19,14 +19,16 @@ import (
 )
 
 type Config struct {
-	Root       string
-	DataDir    string
-	Origin     string
-	Production bool
-	MaxUpload  int64
+	Root        string
+	DataDir     string
+	Origin      string
+	Production  bool
+	MaxUpload   int64
+	FileStorage FileStorage
 }
 type Server struct {
 	Store    *Store
+	Files    FileStorage
 	cfg      Config
 	mux      *http.ServeMux
 	writeMu  sync.Mutex
@@ -80,7 +82,15 @@ func New(cfg Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	a := &Server{Store: store, cfg: cfg, mux: http.NewServeMux(), attempts: make(map[string]attempt)}
+	files := cfg.FileStorage
+	if files == nil {
+		files, err = NewLocalFileStorage(filepath.Join(store.DataDir, "uploads"))
+		if err != nil {
+			store.Close()
+			return nil, err
+		}
+	}
+	a := &Server{Store: store, Files: files, cfg: cfg, mux: http.NewServeMux(), attempts: make(map[string]attempt)}
 	a.routes()
 	return a, nil
 }
