@@ -7,11 +7,11 @@ Go可执行文件＋GORM／SQLite＋Nginx HTTPS反向代理。运行不需要Nod
 1. `CGO_ENABLED=0 go build -trimpath -o bin/yintonglian ./cmd/yintonglian`，跨平台设置GOOS/GOARCH。
 2. 将可执行文件放到服务器 `/opt/yintonglian/bin/`，前端放 `/opt/yintonglian/public/`。
 3. 使用独立系统用户运行，代码只读，持久数据目录有写权限。
-4. 首次运行 `./bin/yintonglian init-admin --root /opt/yintonglian --data /var/lib/yintonglian --username admin` 设置账号。
-5. 设置 `APP_ENV=production`、`APP_ORIGIN=https://真实域名`、`DATA_DIR=/var/lib/yintonglian`，反向代理到127.0.0.1:4317。
+4. 服务直接读取仓库中的 `deploy/config.production.json`，检查域名、数据目录等配置，无需复制为另一份配置文件。首次运行 `./bin/yintonglian init-admin --config /opt/yintonglian/deploy/config.production.json --username admin` 设置账号；迁移已有数据库时不用重新建管理员。
+5. 将 `deploy/yintonglian.service.example` 复制到 `/etc/systemd/system/yintonglian.service`，执行 `sudo systemctl daemon-reload` 和 `sudo systemctl enable --now yintonglian`；Nginx反向代理到127.0.0.1:4317。这些复制步骤目前需手动执行。
 6. 验证HTTPS、后台登录、大文件上传、视频编码、微信开发工具与真机后上线。
 
-生产模式若无HTTPS APP_ORIGIN会拒绝启动。Nginx保留真实Host，不将数据目录映射成静态文件。当前登录限流按直连地址统计；反向代理下请求可能共享桶，后续明确可信代理策略再使用转发IP，不能直接信任任意客户端X-Forwarded-For。
+生产模式若无HTTPS `origin`会拒绝启动。Nginx保留真实Host，不将数据目录映射成静态文件。当前登录限流按直连地址统计；反向代理下请求可能共享桶，后续明确可信代理策略再使用转发IP，不能直接信任任意客户端X-Forwarded-For。
 
 ## 从旧Node版切换
 
@@ -21,7 +21,7 @@ Go可执行文件＋GORM／SQLite＋Nginx HTTPS反向代理。运行不需要Nod
 
 ## 上传与访问
 
-支持JPG、PNG、WebP、MP4、WebM；图片20MB，总文件默认300MB，可设MAX_UPLOAD_MB。使用文件流、魔数校验与随机文件名。没有自动视频转码，需上传兼容编码。
+支持JPG、PNG、WebP、MP4、WebM；图片20MB，总文件默认300MB，可设置配置文件中的 `max_upload_mb`。使用文件流、魔数校验与随机文件名。没有自动视频转码，需上传兼容编码。
 
 上传文件不放公开目录。仅被已发布案例或公司资质引用的文件可匿名读取，其他文件需要管理员会话；下架不会删素材。被任何案例或资质引用的文件无法删除。
 
@@ -29,7 +29,7 @@ Go可执行文件＋GORM／SQLite＋Nginx HTTPS反向代理。运行不需要Nod
 
 ## 备份与恢复
 
-`./bin/yintonglian backup --data /var/lib/yintonglian --output /安全目录/新的备份目录`。
+`./bin/yintonglian backup --config /opt/yintonglian/deploy/config.production.json --output /安全目录/新的备份目录`。
 
 备份使用SQLite VACUUM INTO一致性快照，随后复制附件记录引用的文件。建议维护窗口停止写入；独立备份进程的互斥锁不能阻止另一服务进程更新文件。既有备份目录不能覆盖，不能把备份放到数据目录内部。
 
@@ -38,3 +38,24 @@ Go可执行文件＋GORM／SQLite＋Nginx HTTPS反向代理。运行不需要Nod
 ## 上线准备
 
 企业小程序账号、AppID、合法域名与HTTPS、服务器容量和带宽、公开素材确认、联系方式核对、两平台地址与移动适配方式。按实际部署地区与微信平台规则完成相关上线事项。
+
+## 配置文件
+
+不再读取 APP_ORIGIN、APP_ENV、DATA_DIR 等环境变量。默认读取当前工作目录的 `config.json`；没有默认文件时使用本机开发默认值。显式指定 `--config` 时文件必须存在，JSON格式错误、未知字段或多余内容会拒绝启动。
+
+本机直接运行 `./bin/yintonglian serve`，使用仓库根目录的开发配置。生产配置示例：
+
+```json
+{
+  "root": "/opt/yintonglian",
+  "data_dir": "/var/lib/yintonglian",
+  "listen": "127.0.0.1:4317",
+  "origin": "https://show.zhenxinkeji.top",
+  "production": true,
+  "max_upload_mb": 300
+}
+```
+
+`root` 为包含 public/ 的目录，`data_dir` 保存数据库和上传文件，`listen` 为Go服务监听地址，`origin` 为公开访问地址，`production` 开启HTTPS生产模式，`max_upload_mb` 范围1–4096。文件中的相对目录均相对于配置文件位置；省略 `data_dir` 时使用 root/.data。
+
+显式命令行参数仍可临时覆盖配置，例如 `--addr 127.0.0.1:4319`；命令行相对路径按工作目录解析。serve、init-admin、backup 共用同一份配置。修改配置后执行 `sudo systemctl restart yintonglian`，无须重新编译；只有修改systemd服务文件才需daemon-reload。

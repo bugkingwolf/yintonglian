@@ -1,0 +1,8 @@
+{
+  "root": ".",
+  "data_dir": ".data",
+  "listen": "127.0.0.1:4317",
+  "origin": "",
+  "production": false,
+  "max_upload_mb": 300
+}

@@ -71,12 +71,12 @@ func New(cfg Config) (*Server, error) {
 	if cfg.Origin != "" {
 		u, e := url.Parse(cfg.Origin)
 		if e != nil || u.Hostname() == "" || u.Path != "" || u.RawQuery != "" || u.Fragment != "" || u.User != nil || (u.Scheme != "http" && u.Scheme != "https") {
-			return nil, fmt.Errorf("APP_ORIGIN must be an HTTP(S) origin without path")
+			return nil, fmt.Errorf("origin must be an HTTP(S) origin without path")
 		}
 		cfg.Origin = strings.TrimRight(cfg.Origin, "/")
 	}
 	if cfg.Production && !strings.HasPrefix(cfg.Origin, "https://") {
-		return nil, fmt.Errorf("production requires HTTPS APP_ORIGIN")
+		return nil, fmt.Errorf("production requires HTTPS origin")
 	}
 	store, err := OpenStore(cfg.DataDir)
 	if err != nil {

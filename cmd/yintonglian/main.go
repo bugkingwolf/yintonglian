@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"golang.org/x/term"
 	"log"
@@ -13,19 +12,12 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
 	"yintonglian/internal/app"
 )
 
-func env(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
-}
 func main() {
 	command := "serve"
 	args := os.Args[1:]
@@ -33,31 +25,12 @@ func main() {
 		command = args[0]
 		args = args[1:]
 	}
-	fs := flag.NewFlagSet(command, flag.ExitOnError)
-	root := fs.String("root", env("APP_ROOT", "."), "directory containing public/")
-	data := fs.String("data", env("DATA_DIR", ""), "persistent data directory")
-	addr := fs.String("addr", net.JoinHostPort(env("HOST", "127.0.0.1"), env("PORT", "4317")), "listen address")
-	origin := fs.String("origin", env("APP_ORIGIN", ""), "public origin")
-	production := fs.Bool("production", env("APP_ENV", env("NODE_ENV", "development")) == "production", "HTTPS production mode")
-	maxUpload := fs.Int64("max-upload-mb", 300, "upload size limit in MB")
-	dest := fs.String("output", "", "backup destination (new directory)")
-	username := fs.String("username", "admin", "admin account for init-admin")
-	fs.Parse(args)
-	if *data == "" {
-		*data = filepath.Join(*root, ".data")
-	}
-	if value := os.Getenv("MAX_UPLOAD_MB"); value != "" {
-		n, e := strconv.ParseInt(value, 10, 64)
-		if e != nil || n < 1 {
-			log.Fatal("invalid MAX_UPLOAD_MB")
-		}
-		*maxUpload = n
-	}
-	if *maxUpload < 1 || *maxUpload > 4096 {
-		log.Fatal("upload limit must be 1..4096 MB")
+	opts, err := parseOptions(command, args)
+	if err != nil {
+		log.Fatal(err)
 	}
 	// Initialization and backup operate locally and do not need a deployed origin.
-	cfg := app.Config{Root: *root, DataDir: *data, Origin: *origin, Production: *production, MaxUpload: *maxUpload * 1024 * 1024}
+	cfg := app.Config{Root: opts.Root, DataDir: opts.Data, Origin: opts.Origin, Production: opts.Production, MaxUpload: opts.MaxUploadMB * 1024 * 1024}
 	if command != "serve" {
 		cfg.Production = false
 		cfg.Origin = ""
@@ -69,7 +42,7 @@ func main() {
 	defer server.Close()
 	switch command {
 	case "init-admin":
-		fmt.Printf("管理员账号：%s\n输入至少12位密码（不显示内容）：", *username)
+		fmt.Printf("管理员账号：%s\n输入至少12位密码（不显示内容）：", opts.Username)
 		var password []byte
 		if term.IsTerminal(int(os.Stdin.Fd())) {
 			password, err = term.ReadPassword(int(os.Stdin.Fd()))
@@ -82,28 +55,28 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		if err = server.CreateAdmin(*username, string(password)); err != nil {
+		if err = server.CreateAdmin(opts.Username, string(password)); err != nil {
 			log.Fatal(err)
 		}
 		fmt.Println("管理员已创建。")
 		return
 	case "backup":
-		if *dest == "" {
-			*dest = filepath.Join("backups", time.Now().UTC().Format("20060102-150405"))
+		if opts.Output == "" {
+			opts.Output = filepath.Join("backups", time.Now().UTC().Format("20060102-150405"))
 		}
-		if err = server.Backup(*dest); err != nil {
+		if err = server.Backup(opts.Output); err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println("完整备份已保存：" + *dest)
+		fmt.Println("完整备份已保存：" + opts.Output)
 		return
 	case "serve":
 	default:
 		log.Fatal("commands: serve, init-admin, backup")
 	}
-	if info, e := os.Stat(filepath.Join(*root, "public", "index.html")); e != nil || !info.Mode().IsRegular() {
+	if info, e := os.Stat(filepath.Join(opts.Root, "public", "index.html")); e != nil || !info.Mode().IsRegular() {
 		log.Fatal("public/index.html not found; set --root to the project directory")
 	}
-	listener, err := net.Listen("tcp", *addr)
+	listener, err := net.Listen("tcp", opts.Addr)
 	if err != nil {
 		log.Fatal(err)
 	}

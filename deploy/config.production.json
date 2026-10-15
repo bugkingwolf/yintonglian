@@ -1,0 +1,8 @@
+{
+  "root": "/opt/yintonglian",
+  "data_dir": "/var/lib/yintonglian",
+  "listen": "127.0.0.1:4317",
+  "origin": "https://show.zhenxinkeji.top",
+  "production": true,
+  "max_upload_mb": 300
+}

@@ -2,7 +2,7 @@
 
 ## 当前实现
 
-`internal/app/storage.go` 定义 `FileStorage`：Put、Open、Stat、Delete。默认 `LocalFileStorage` 写入 DATA_DIR/uploads，与原目录兼容，不需要迁移数据或修改数据库。Go服务使用 Config.FileStorage 注入其他实现；未注入时仍使用本地磁盘。
+`internal/app/storage.go` 定义 `FileStorage`：Put、Open、Stat、Delete。默认 `LocalFileStorage` 写入 配置项 data_dir 下的 uploads/，与原目录兼容，不需要迁移数据或修改数据库。Go服务使用 Config.FileStorage 注入其他实现；未注入时仍使用本地磁盘。
 
 文件标识沿用 uploads.filename；作品、团队与资质中的地址仍是 /media/<文件标识>，不保存服务器IP或OSS绝对URL。PPT内置素材仍在 public/assets，是随代码部署的静态资源，不属于用户上传存储。
 

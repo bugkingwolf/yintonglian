@@ -39,7 +39,7 @@ make build
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o bin/yintonglian-linux-amd64 ./cmd/yintonglian
 ```
 
-生产使用 `APP_ENV=production`、`APP_ORIGIN=https://真实域名`、HTTPS反向代理与持久数据目录。详见 `docs/DEPLOYMENT.md`。
+服务默认读取 `config.json`，不再读取环境变量。生产部署使用 `deploy/config.production.json`（已填写 `https://show.zhenxinkeji.top`）、HTTPS反向代理与持久数据目录。详见 `docs/DEPLOYMENT.md`。
 
 ## 代码结构
 
