@@ -8,3 +8,6 @@ backups/
 
 bin/
 /yintonglian
+
+# WeChat developer tool local preferences
+miniprogram/project.private.config.json

@@ -108,6 +108,7 @@ func (a *Server) routes() {
 	a.route("POST /api/admin/logout", true, a.logout)
 	a.route("POST /api/admin/password", true, a.changePassword)
 	a.route("GET /api/admin/content", true, a.adminContent)
+	a.route("GET /api/admin/storage", true, a.storageStatus)
 	a.route("POST /api/admin/cases", true, a.saveCase)
 	a.route("PUT /api/admin/cases/{id}", true, a.saveCase)
 	a.route("DELETE /api/admin/cases/{id}", true, a.deleteCase)

@@ -1,1 +1,36 @@
-{"description":"银通联作品展厅","projectname":"yintonglian","appid":"touristappid","compileType":"miniprogram","miniprogramRoot":"./","setting":{"es6":true,"postcss":true,"minified":true,"urlCheck":true}}
+{
+  "description": "银通联作品展厅",
+  "projectname": "yintonglian",
+  "appid": "wx65d2a68cd7041e15",
+  "compileType": "miniprogram",
+  "miniprogramRoot": "./",
+  "setting": {
+    "es6": true,
+    "postcss": true,
+    "minified": true,
+    "urlCheck": true,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "enhance": false,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "editorSetting": {}
+}
