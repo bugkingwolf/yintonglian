@@ -17,9 +17,22 @@ func (a *Server) publicConfig(w http.ResponseWriter, r *http.Request) error {
 			enabled = append(enabled, p)
 		}
 	}
+	publishedIDs := map[string]bool{}
+	for _, c := range d.Cases {
+		if c.Status == "published" {
+			publishedIDs[c.ID] = true
+		}
+	}
 	members := make([]TeamMember, 0)
 	for _, m := range d.Company.TeamMembers {
 		if m.Enabled {
+			ids := make([]string, 0)
+			for _, id := range m.CaseIDs {
+				if publishedIDs[id] {
+					ids = append(ids, id)
+				}
+			}
+			m.CaseIDs = ids
 			members = append(members, m)
 		}
 	}

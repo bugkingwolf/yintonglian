@@ -9,3 +9,11 @@ function environment(){
 }
 test('website renders real category and case paths without phantom media',async()=>{const e=environment();await e.ready();assert.match(e.html(),/探索业务与案例/);assert.match(e.html(),/\/cases\?category=marketing/);assert.match(e.html(),/\/cases\/life-forward/);assert.match(e.html(),/业务与案例/);for(const c of seed.cases)assert.ok(existsSync('public'+c.cover));e.go('/cases');assert.match(e.html(),/查看营销案例/);assert.match(e.html(),/按客户看案例/);e.go('/cases?category=technology');assert.match(e.html(),/儿童节绘画互动/);assert.doesNotMatch(e.html(),/class="work-card video"/);e.go('/cases?client=icbc');assert.match(e.html(),/工商银行案例/);assert.match(e.html(),/3 个案例/);e.go('/cases/life-forward');assert.match(e.html(),/原视频上传后可在线播放/);assert.doesNotMatch(e.html(),/<video controls/);assert.match(e.html(),/分享案例/);e.go('/platforms');assert.match(e.html(),/平台入口待配置/);assert.doesNotMatch(e.html(),/data-platform="geo"/);e.go('/about');assert.match(e.html(),/公司愿景/);assert.match(e.html(),/4008-125521/);e.go('/cases/nonexistent');assert.match(e.html(),/案例暂不可查看/);});
 test('public text is escaped rather than rendered as HTML',async()=>{const e=environment();await e.ready();vm.runInContext("config.company.slogan='<img src=x onerror=alert(1)>'; render();",e.context);assert.match(e.html(),/&lt;img/);assert.doesNotMatch(e.html(),/<img src=x onerror/);});
+
+test('business card links show escaped contact fields and only available cases',async()=>{
+ const e=environment();await e.ready();
+ vm.runInContext(`config.company.teamMembers=[{id:'card-test',name:'示例人员',role:'商务',biography:'<img src=x onerror=alert(1)>',phone:'010-12345678',wechat:'test_wechat',wechatQR:'/media/example.png',caseIds:['life-forward','missing'],group:'execution'}];render();`,e.context);
+ e.go('/about');assert.match(e.html(),/\/people\/card-test/);
+ e.go('/people/card-test');assert.match(e.html(),/保存联系人/);assert.match(e.html(),/tel:01012345678/);assert.match(e.html(),/复制微信号/);assert.match(e.html(),/代表案例/);assert.match(e.html(),/&lt;img/);assert.doesNotMatch(e.html(),/<img src=x onerror/);assert.doesNotMatch(e.html(),/\/cases\/missing/);
+ e.go('/people/hidden');assert.match(e.html(),/名片暂不可查看/);assert.doesNotMatch(e.html(),/test_wechat/);
+});

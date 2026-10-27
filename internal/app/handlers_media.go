@@ -154,7 +154,7 @@ func (a *Server) mediaPublished(url string) (bool, error) {
 		return true, nil
 	}
 	for _, m := range company.TeamMembers {
-		if m.Enabled && m.Photo == url {
+		if m.Enabled && (m.Photo == url || m.WechatQR == url) {
 			return true, nil
 		}
 	}
@@ -232,7 +232,7 @@ func (a *Server) deleteUpload(w http.ResponseWriter, r *http.Request) error {
 		return bad(409, "该文件被内容引用，请先移除引用")
 	}
 	for _, m := range company.TeamMembers {
-		if m.Photo == url {
+		if m.Photo == url || m.WechatQR == url {
 			return bad(409, "该文件被团队成员引用，请先移除引用")
 		}
 	}

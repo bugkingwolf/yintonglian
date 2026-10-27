@@ -177,6 +177,37 @@ func (a *Server) saveCompany(w http.ResponseWriter, r *http.Request) error {
 			if m.Photo, err = a.mediaValue(r.Context(), m.Photo, "image"); err != nil {
 				return err
 			}
+
+			if m.Phone, err = clean(m.Phone, 40); err != nil {
+				return err
+			}
+			for _, ch := range m.Phone {
+				if !strings.ContainsRune("0123456789+()- ", ch) {
+					return bad(400, "成员电话格式不正确")
+				}
+			}
+			if m.Wechat, err = clean(m.Wechat, 100); err != nil {
+				return err
+			}
+			if strings.ContainsAny(m.Wechat, "\r\n") {
+				return bad(400, "微信号不能换行")
+			}
+			if m.WechatQR, err = a.mediaValue(r.Context(), m.WechatQR, "image"); err != nil {
+				return err
+			}
+			if len(m.CaseIDs) > 20 {
+				return bad(400, "每人最多关联20个案例")
+			}
+			refs := map[string]bool{}
+			for _, id := range m.CaseIDs {
+				if refs[id] {
+					return bad(400, "关联案例重复")
+				}
+				refs[id] = true
+				if _, e := getRow[Case](a.Store.DB, "cases", id); e != nil {
+					return bad(400, "关联案例不存在，请重新选择")
+				}
+			}
 			if err = validOrder(m.Order); err != nil {
 				return err
 			}

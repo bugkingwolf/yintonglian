@@ -34,14 +34,18 @@ type Case struct {
 	UpdatedAt     string   `json:"updatedAt"`
 }
 type TeamMember struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Role      string `json:"role"`
-	Group     string `json:"group"`
-	Photo     string `json:"photo"`
-	Biography string `json:"biography"`
-	Order     int    `json:"order"`
-	Enabled   bool   `json:"enabled"`
+	Phone     string   `json:"phone"`
+	Wechat    string   `json:"wechat"`
+	WechatQR  string   `json:"wechatQR"`
+	CaseIDs   []string `json:"caseIds"`
+	ID        string   `json:"id"`
+	Name      string   `json:"name"`
+	Role      string   `json:"role"`
+	Group     string   `json:"group"`
+	Photo     string   `json:"photo"`
+	Biography string   `json:"biography"`
+	Order     int      `json:"order"`
+	Enabled   bool     `json:"enabled"`
 }
 type Company struct {
 	ID                  string       `json:"id"`

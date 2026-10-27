@@ -77,3 +77,16 @@ test('webview accepts permitted HTTPS hosts and rejects other schemes and hosts'
   assert.equal(page.data.url,'');assert.ok(page.data.error);
  }
 });
+
+test('member card shares its stable path and only shows available case records',async()=>{
+ let page,saved,phone,copied,preview,shared;
+ const member={id:'person-one',name:'联系人',role:'商务',phone:'010-12345678',wechat:'wechat_test',wechatQR:'https://example.com/qr.png',caseIds:['published','missing']};
+ vm.runInNewContext(readFileSync('miniprogram/pages/member/index.js','utf8'),{
+ require:()=>({content:async()=>({config:{company:{name:'银通联',teamMembers:[member]}},items:[{id:'published'}]})}),Page:p=>{page=p;},wx:{stopPullDownRefresh(){},setNavigationBarTitle(){},addPhoneContact:p=>{saved=p;},makePhoneCall:p=>{phone=p;},setClipboardData:p=>{copied=p;},previewImage:p=>{preview=p;}}
+ });page.setData=v=>Object.assign(page.data,v);page.id='person-one';await page.load();
+ assert.equal(page.data.items.length,1);assert.equal(page.data.loading,false);
+ page.saveContact();assert.equal(saved.firstName,'联系人');assert.equal(saved.weChatNumber,'wechat_test');
+ page.phone();assert.equal(phone.phoneNumber,'01012345678');page.copyWechat();assert.equal(copied.data,'wechat_test');page.previewQR();assert.equal(preview.current,member.wechatQR);
+ assert.equal(page.onShareAppMessage().path,'/pages/member/index?id=person-one');
+ page.id='hidden';await page.load();assert.equal(page.data.member,null);assert.match(page.data.error,/未公开/);assert.equal(page.onShareAppMessage().path,'/pages/about/index');
+});
