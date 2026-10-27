@@ -374,7 +374,9 @@
         "order": 120,
         "enabled": true
       }
-    ]
+    ],
+    "latitude": 39.99397,
+    "longitude": 116.403885
   },
   "platforms": [
     {

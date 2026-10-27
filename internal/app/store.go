@@ -99,6 +99,10 @@ func OpenStore(dataDir string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
+	if err = s.seedCompanyLocation(); err != nil {
+		db.Close()
+		return nil, err
+	}
 	_ = os.Chmod(filepath.Join(abs, "content.sqlite"), 0600)
 	return s, nil
 }
@@ -287,5 +291,44 @@ func (s *Store) seedTeamMembers() error {
 		return err
 	}
 	record["teamMembers"] = raw
+	return putRow(s.DB, "settings", record)
+}
+
+// Initialize only the original PPT address. Never replace edited coordinates or an edited address.
+func (s *Store) seedCompanyLocation() error {
+	record, err := getRow[map[string]json.RawMessage](s.DB, "settings", "company")
+	if err == gorm.ErrRecordNotFound {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if _, ok := record["latitude"]; ok {
+		return nil
+	}
+	if _, ok := record["longitude"]; ok {
+		return nil
+	}
+	var defaults Snapshot
+	if err = json.Unmarshal(seedJSON, &defaults); err != nil {
+		return err
+	}
+	if _, ok := record["address"]; !ok {
+		return nil
+	}
+	var address string
+	if err = json.Unmarshal(record["address"], &address); err != nil {
+		return err
+	}
+	if address != defaults.Company.Address {
+		return nil
+	}
+	for key, value := range map[string]*float64{"latitude": defaults.Company.Latitude, "longitude": defaults.Company.Longitude} {
+		raw, e := json.Marshal(value)
+		if e != nil {
+			return e
+		}
+		record[key] = raw
+	}
 	return putRow(s.DB, "settings", record)
 }

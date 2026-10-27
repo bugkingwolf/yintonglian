@@ -47,6 +47,8 @@ type TeamMember struct {
 	Enabled   bool   `json:"enabled"`
 }
 type Company struct {
+	Latitude            *float64     `json:"latitude"`
+	Longitude           *float64     `json:"longitude"`
 	ID                  string       `json:"id"`
 	Name                string       `json:"name"`
 	English             string       `json:"english"`

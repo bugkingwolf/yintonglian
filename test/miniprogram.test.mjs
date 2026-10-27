@@ -114,3 +114,12 @@ test('sharing waits for the generated card instead of returning the raw portrait
  const ready=await share.promise;assert.equal(ready.imageUrl,'wxfile://designed-card.png');assert.equal(ready.path,'/pages/member/index?id=person');
  page.shareImage='wxfile://cached-card.png';assert.equal(page.onShareAppMessage().imageUrl,'wxfile://cached-card.png');
 });
+
+test('company navigation opens the configured GCJ-02 destination without requesting user location',()=>{
+ const module={exports:{}};let opened,modal;
+ vm.runInNewContext(readFileSync('miniprogram/utils/api.js','utf8'),{require:()=>({}),module,wx:{openLocation:opts=>{opened=opts;},showModal:opts=>{modal=opts;}}});
+ const api=module.exports,c={name:'银通联',address:'北辰汇园大厦G座14层',latitude:39.993970,longitude:116.403885};
+ assert.equal(api.hasLocation(c),true);api.openLocation(c);assert.equal(opened.latitude,c.latitude);assert.equal(opened.longitude,c.longitude);assert.equal(opened.address,c.address);
+ opened.fail();assert.equal(modal.confirmText,'复制地址');
+ for(const latitude of [null,undefined,'39.9',NaN,91])assert.equal(api.hasLocation({...c,latitude}),false);
+});

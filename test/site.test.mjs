@@ -17,3 +17,8 @@ test('business card contains only personal information and contact actions',asyn
  e.go('/people/card-test');assert.match(e.html(),/保存联系人/);assert.match(e.html(),/tel:01012345678/);assert.match(e.html(),/复制微信号/);assert.doesNotMatch(e.html(),/代表案例|SELECTED PROJECTS|class="work-card/);assert.match(e.html(),/&lt;img/);assert.doesNotMatch(e.html(),/<img src=x onerror/);assert.doesNotMatch(e.html(),/\/cases\/missing/);
  e.go('/people/hidden');assert.match(e.html(),/名片暂不可查看/);assert.doesNotMatch(e.html(),/test_wechat/);
 });
+
+test('company navigation links use configured coordinates and disappear when cleared',async()=>{
+ const e=environment();await e.ready();e.go('/about');assert.match(e.html(),/导航到公司/);assert.match(e.html(),/position=116.403885,39.99397/);
+ vm.runInContext('config.company.latitude=null;config.company.longitude=null;render()',e.context);assert.doesNotMatch(e.html(),/导航到公司/);
+});

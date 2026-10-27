@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"math"
 	"net/http"
 	"regexp"
 	"strings"
@@ -115,6 +116,25 @@ func (a *Server) saveCompany(w http.ResponseWriter, r *http.Request) error {
 		}
 		if *ptr, err = clean(v, max); err != nil {
 			return err
+		}
+	}
+	for key, ptr := range map[string]**float64{"latitude": &c.Latitude, "longitude": &c.Longitude} {
+		if raw, ok := changes[key]; ok {
+			if json.Unmarshal(raw, ptr) != nil {
+				return bad(400, "经纬度需填写数字")
+			}
+		}
+	}
+	if (c.Latitude == nil) != (c.Longitude == nil) {
+		return bad(400, "请同时填写经度和纬度，或同时留空")
+	}
+	if c.Latitude != nil {
+		lat, lng := *c.Latitude, *c.Longitude
+		if math.IsNaN(lat) || math.IsInf(lat, 0) || math.IsNaN(lng) || math.IsInf(lng, 0) || lat < -90 || lat > 90 || lng < -180 || lng > 180 {
+			return bad(400, "经纬度超出有效范围")
+		}
+		if c.Address == "" {
+			return bad(400, "请填写公司地址")
 		}
 	}
 	if c.Name == "" {
