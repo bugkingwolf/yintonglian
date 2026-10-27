@@ -90,3 +90,27 @@ test('member card shares its stable path and only shows available case records',
  assert.equal(page.onShareAppMessage().path,'/pages/member/index?id=person-one');
  page.id='hidden';await page.load();assert.equal(page.data.member,null);assert.match(page.data.error,/未公开/);assert.equal(page.onShareAppMessage().path,'/pages/about/index');
 });
+
+test('share cover uses a 5:4 canvas with identity text and a contained portrait',async()=>{
+ let module={exports:{}},exported,drawn=[],text=[];
+ const ctx={fillRect(){},fillText(...args){text.push(args);},measureText:s=>({width:s.length*12}),drawImage(...args){drawn.push(args);}};
+ const canvas={getContext:()=>ctx,createImage:()=>{const image={width:300,height:600};Object.defineProperty(image,'src',{set(){image.onload();}});return image;}};
+ const wx={createSelectorQuery:()=>({in(){return this;},select(){return this;},fields(){return this;},exec(fn){fn([{node:canvas}]);}}),getImageInfo:opts=>opts.success({path:'local-photo'}),canvasToTempFilePath:opts=>{exported=opts;opts.success({tempFilePath:'wxfile://business-card.png'});}};
+ vm.runInNewContext(readFileSync('miniprogram/utils/member-share.js','utf8'),{module,wx,setTimeout,clearTimeout});
+ const output=await module.exports.createMemberCover({}, {name:'张先生',role:'商务总监',photo:'https://example.com/photo.jpg'}, {name:'银通联',english:'MEDIA BANK'});
+ assert.equal(output,'wxfile://business-card.png');assert.equal(exported.destWidth/exported.destHeight,1.25);
+ assert.ok(text.some(args=>args[0]==='张先生'));assert.ok(text.some(args=>args[0]==='商务总监'));assert.ok(text.some(args=>args[0]==='银通联'));
+ assert.equal(drawn.length,1);assert.ok(drawn[0][3]<=174);assert.ok(drawn[0][4]<=220);
+ wx.getImageInfo=opts=>opts.fail();drawn=[];text=[];
+ assert.equal(await module.exports.createMemberCover({}, {name:'张先生',role:'商务',photo:'bad'}, {name:'银通联'}),'wxfile://business-card.png');assert.equal(drawn.length,0);assert.ok(text.some(args=>args[0]==='张先生'));
+});
+
+test('sharing waits for the generated card instead of returning the raw portrait',async()=>{
+ let page;
+ vm.runInNewContext(readFileSync('miniprogram/pages/member/index.js','utf8'),{require:()=>({}),Page:p=>{page=p;},Promise});
+ page.data={member:{id:'person',name:'张先生',role:'商务',photo:'https://example.com/head.jpg'},company:{name:'银通联'}};
+ page.shareCover=Promise.resolve('wxfile://designed-card.png');
+ const share=page.onShareAppMessage();assert.equal(share.imageUrl,undefined);
+ const ready=await share.promise;assert.equal(ready.imageUrl,'wxfile://designed-card.png');assert.equal(ready.path,'/pages/member/index?id=person');
+ page.shareImage='wxfile://cached-card.png';assert.equal(page.onShareAppMessage().imageUrl,'wxfile://cached-card.png');
+});
