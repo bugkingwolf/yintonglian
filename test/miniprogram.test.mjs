@@ -123,3 +123,22 @@ test('company navigation opens the configured GCJ-02 destination without request
  opened.fail();assert.equal(modal.confirmText,'复制地址');
  for(const latitude of [null,undefined,'39.9',NaN,91])assert.equal(api.hasLocation({...c,latitude}),false);
 });
+
+test('about map follows company coordinates and clears stale markers when location is removed',async()=>{
+ let page,opened,company={name:'银通联',address:'公司地址',latitude:39.99397,longitude:116.403885,teamMembers:[]};
+ vm.runInNewContext(readFileSync('miniprogram/pages/about/index.js','utf8'),{
+  require:()=>({content:async()=>({config:{company}}),hasLocation:c=>typeof c.latitude==='number'&&typeof c.longitude==='number',openLocation:c=>{opened=c;}}),
+  Page:p=>{page=p;},wx:{stopPullDownRefresh(){}}
+ });
+ page.setData=v=>Object.assign(page.data,v);
+ await page.load();
+ assert.equal(page.data.hasLocation,true);
+ assert.equal(page.data.mapMarkers.length,1);
+ page.navigate();assert.equal(opened,company);
+ const marker=page.data.mapMarkers[0];
+ assert.equal(marker.latitude,company.latitude);assert.equal(marker.longitude,company.longitude);
+ assert.equal(marker.callout.content,'银通联\n公司地址');
+ assert.ok(readFileSync('miniprogram'+marker.iconPath).length>0);
+ company={...company,latitude:null,longitude:null};await page.load();
+ assert.equal(page.data.hasLocation,false);assert.equal(page.data.mapMarkers.length,0);
+});
