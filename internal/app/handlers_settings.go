@@ -195,19 +195,6 @@ func (a *Server) saveCompany(w http.ResponseWriter, r *http.Request) error {
 			if m.WechatQR, err = a.mediaValue(r.Context(), m.WechatQR, "image"); err != nil {
 				return err
 			}
-			if len(m.CaseIDs) > 20 {
-				return bad(400, "每人最多关联20个案例")
-			}
-			refs := map[string]bool{}
-			for _, id := range m.CaseIDs {
-				if refs[id] {
-					return bad(400, "关联案例重复")
-				}
-				refs[id] = true
-				if _, e := getRow[Case](a.Store.DB, "cases", id); e != nil {
-					return bad(400, "关联案例不存在，请重新选择")
-				}
-			}
 			if err = validOrder(m.Order); err != nil {
 				return err
 			}
