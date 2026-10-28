@@ -47,7 +47,11 @@ CREATE TABLE IF NOT EXISTS cases(id TEXT PRIMARY KEY,category_id TEXT NOT NULL R
 CREATE TABLE IF NOT EXISTS settings(id TEXT PRIMARY KEY,payload TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS uploads(id TEXT PRIMARY KEY,filename TEXT NOT NULL,mime TEXT NOT NULL,size INTEGER NOT NULL,original_name TEXT NOT NULL,created_at INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS admins(id INTEGER PRIMARY KEY CHECK(id=1),username TEXT NOT NULL UNIQUE,password TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS sessions(hash TEXT PRIMARY KEY,csrf TEXT NOT NULL,expires INTEGER NOT NULL);`
+CREATE TABLE IF NOT EXISTS sessions(hash TEXT PRIMARY KEY,csrf TEXT NOT NULL,expires INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_cases_status_order ON cases(status,CAST(json_extract(payload,'$.order') AS INTEGER),id);
+CREATE INDEX IF NOT EXISTS idx_cases_category ON cases(category_id,status);
+CREATE INDEX IF NOT EXISTS idx_cases_client ON cases(client_id,status);
+CREATE INDEX IF NOT EXISTS idx_uploads_created ON uploads(created_at DESC,id DESC);`
 
 func OpenStore(dataDir string) (*Store, error) {
 	abs, err := filepath.Abs(dataDir)

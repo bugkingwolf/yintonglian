@@ -122,12 +122,12 @@ func contentCase(t *testing.T, h *harness, id string) Case {
 }
 func TestPublicRoutes(t *testing.T) {
 	h := newHarness(t)
-	status, v, _ := h.call(t, "GET", "/api/public/cases", nil, false, nil)
+	status, v, _ := h.call(t, "GET", "/api/public/case-list", nil, false, nil)
 	expect(t, status, 200)
 	if len(v["items"].([]any)) != 6 {
 		t.Fatal(v)
 	}
-	status, v, _ = h.call(t, "GET", "/api/public/cases?client=icbc", nil, false, nil)
+	status, v, _ = h.call(t, "GET", "/api/public/case-list?client=icbc", nil, false, nil)
 	expect(t, status, 200)
 	if len(v["items"].([]any)) != 3 {
 		t.Fatal(v)
@@ -140,7 +140,7 @@ func TestPublicRoutes(t *testing.T) {
 		status, _, _ = h.call(t, "GET", path, nil, false, nil)
 		expect(t, status, 404)
 	}
-	status, _, _ = h.call(t, "GET", "/api/admin/content", nil, false, nil)
+	status, _, _ = h.call(t, "GET", "/api/admin/config", nil, false, nil)
 	expect(t, status, 401)
 	status, v, _ = h.call(t, "GET", "/api/health", nil, false, nil)
 	expect(t, status, 200)
@@ -296,11 +296,11 @@ func TestPasswordRotationAndLogout(t *testing.T) {
 	status, v, _ := h.call(t, "POST", "/api/admin/password", map[string]string{"currentPassword": "go-test-password-123", "password": "new-go-password-456"}, true, nil)
 	expect(t, status, 200)
 	h.csrf = v["csrf"].(string)
-	status, _, _ = h.call(t, "GET", "/api/admin/content", nil, false, map[string]string{"Cookie": oldCookie})
+	status, _, _ = h.call(t, "GET", "/api/admin/config", nil, false, map[string]string{"Cookie": oldCookie})
 	expect(t, status, 401)
 	status, _, _ = h.call(t, "POST", "/api/admin/logout", map[string]string{}, true, nil)
 	expect(t, status, 200)
-	status, _, _ = h.call(t, "GET", "/api/admin/content", nil, true, nil)
+	status, _, _ = h.call(t, "GET", "/api/admin/config", nil, true, nil)
 	expect(t, status, 401)
 	status, _, _ = h.call(t, "POST", "/api/admin/login", map[string]string{"username": "admin", "password": "go-test-password-123"}, true, nil)
 	expect(t, status, 401)
@@ -363,7 +363,7 @@ func TestRestartPreservesDataAndSession(t *testing.T) {
 	if v["company"].(map[string]any)["slogan"] != "Persistence checked" {
 		t.Fatal("content lost")
 	}
-	status, _, _ = h.call(t, "GET", "/api/admin/content", nil, true, nil)
+	status, _, _ = h.call(t, "GET", "/api/admin/config", nil, true, nil)
 	expect(t, status, 200)
 }
 func TestConcurrentHeroUpdates(t *testing.T) {

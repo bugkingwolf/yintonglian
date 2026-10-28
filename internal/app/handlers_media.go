@@ -139,14 +139,12 @@ func mediaReferenced(c Case, url string) bool {
 	return c.Cover == url || c.Video == url || slices.Contains(c.Gallery, url)
 }
 func (a *Server) mediaPublished(url string) (bool, error) {
-	items, err := a.published()
-	if err != nil {
+	var count int64
+	if err := a.Store.DB.Table("cases").Where("status = ?", "published").Where("json_extract(payload,'$.cover') = ? OR json_extract(payload,'$.video') = ? OR EXISTS (SELECT 1 FROM json_each(cases.payload,'$.gallery') WHERE value = ?)", url, url, url).Count(&count).Error; err != nil {
 		return false, err
 	}
-	for _, c := range items {
-		if mediaReferenced(c, url) {
-			return true, nil
-		}
+	if count > 0 {
+		return true, nil
 	}
 	company, err := getRow[Company](a.Store.DB, "settings", "company")
 	if err != nil {
@@ -217,14 +215,12 @@ func (a *Server) deleteUpload(w http.ResponseWriter, r *http.Request) error {
 		return recordError(err, "文件不存在")
 	}
 	url := "/media/" + x.Filename
-	items, err := listRows[Case](a.Store.DB, "cases")
-	if err != nil {
+	var count int64
+	if err = a.Store.DB.Table("cases").Where("json_extract(payload,'$.cover') = ? OR json_extract(payload,'$.video') = ? OR EXISTS (SELECT 1 FROM json_each(cases.payload,'$.gallery') WHERE value = ?)", url, url, url).Count(&count).Error; err != nil {
 		return err
 	}
-	for _, c := range items {
-		if mediaReferenced(c, url) {
-			return bad(409, "该文件被内容引用，请先移除引用")
-		}
+	if count > 0 {
+		return bad(409, "该文件被内容引用，请先移除引用")
 	}
 	company, err := getRow[Company](a.Store.DB, "settings", "company")
 	if err != nil {

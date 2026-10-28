@@ -23,11 +23,11 @@ function home(api){
 }
 
 test('home exits loading on success and exposes a retryable error on failure',async()=>{
- const page=home({content:async()=>({config:{company:{homeFeaturedLimit:4}},items:[{id:'sample',featured:true,hero:true}]})});
+ const page=home({home:async()=>({config:{company:{homeFeaturedLimit:4}},hero:[{id:'sample',featured:true,hero:true}],featured:[{id:'sample',featured:true,hero:true}]})});
  await page.load();
  assert.equal(page.data.loading,false);
  assert.equal(page.data.hero.id,'sample');
- const failed=home({content:async()=>{throw Error('网络不可用');}});
+ const failed=home({home:async()=>{throw Error('网络不可用');}});
  await failed.load();
  assert.equal(failed.data.loading,false);
  assert.equal(failed.data.error,'网络不可用');
@@ -43,7 +43,7 @@ test('API requests have finite timeout and handle empty error responses',async()
  assert.equal(request.timeout,12000);
  request.success({statusCode:502,data:null});
  await assert.rejects(failed,/加载失败/);
- const network=apiModule.exports.request('/api/public/cases');
+ const network=apiModule.exports.request('/api/public/case-list');
  request.fail();
  await assert.rejects(network,/连接暂不可用/);
  const domain=apiModule.exports.request('/api/public/config');
@@ -127,7 +127,7 @@ test('company navigation opens the configured GCJ-02 destination without request
 test('about map follows company coordinates and clears stale markers when location is removed',async()=>{
  let page,opened,company={name:'银通联',address:'公司地址',latitude:39.99397,longitude:116.403885,teamMembers:[]};
  vm.runInNewContext(readFileSync('miniprogram/pages/about/index.js','utf8'),{
-  require:()=>({content:async()=>({config:{company}}),hasLocation:c=>typeof c.latitude==='number'&&typeof c.longitude==='number',openLocation:c=>{opened=c;}}),
+  require:()=>({config:async()=>({company}),hasLocation:c=>typeof c.latitude==='number'&&typeof c.longitude==='number',openLocation:c=>{opened=c;}}),
   Page:p=>{page=p;},wx:{stopPullDownRefresh(){}}
  });
  page.setData=v=>Object.assign(page.data,v);
@@ -141,4 +141,18 @@ test('about map follows company coordinates and clears stale markers when locati
  assert.ok(readFileSync('miniprogram'+marker.iconPath).length>0);
  company={...company,latitude:null,longitude:null};await page.load();
  assert.equal(page.data.hasLocation,false);assert.equal(page.data.mapMarkers.length,0);
+});
+
+test('mini case pagination ignores stale filters, retries failed appends and removes duplicates',async()=>{
+ let page;const pending=[];const config={company:{},categories:[],clients:[]};
+ vm.runInNewContext(readFileSync('miniprogram/pages/cases/index.js','utf8'),{require:()=>({caseList:args=>new Promise((resolve,reject)=>pending.push({args,resolve,reject}))}),Page:p=>{page=p;},wx:{stopPullDownRefresh(){}},getApp:()=>({globalData:{}}),Set});
+ page.setData=v=>Object.assign(page.data,v);page.data.config=config;
+ const first=page.loadPage(false);page.data.type='graphic';const latest=page.loadPage(false);
+ pending[1].resolve({items:[{id:'new'}],total:24,page:1,pageSize:12});await latest;
+ pending[0].resolve({items:[{id:'old'}],total:1,page:1,pageSize:12});await first;
+ assert.equal(page.data.items[0].id,'new');assert.equal(page.data.hasMore,true);
+ const failed=page.loadPage(true);assert.equal(pending[2].args.page,2);pending[2].reject(Error('加载失败'));await failed;
+ assert.equal(page.data.page,1);assert.equal(page.data.items.length,1);assert.equal(page.data.listError,'加载失败');
+ const retry=page.loadPage(true);pending[3].resolve({items:[{id:'new'},{id:'next'}],total:24,page:2,pageSize:12});await retry;
+ assert.equal(page.data.items.length,2);assert.equal(page.data.page,2);assert.equal(page.data.hasMore,false);assert.equal(page.data.listError,'');
 });

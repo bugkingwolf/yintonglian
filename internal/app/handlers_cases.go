@@ -117,7 +117,7 @@ func (a *Server) saveCase(w http.ResponseWriter, r *http.Request) error {
 	}
 	defer tx.Rollback()
 	if value.Hero {
-		items, err := listRows[Case](tx, "cases")
+		items, err := listRows[Case](tx.Where("json_extract(payload, '$.hero') = 1"), "cases")
 		if err != nil {
 			return err
 		}
