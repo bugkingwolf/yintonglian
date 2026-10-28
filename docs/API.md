@@ -50,3 +50,5 @@
 案例摘要含id、title、categoryId、clientId、type、summary、cover、hasVideo、status、featured、hero、demo、order、updatedAt，不返回description、gallery、video、experienceUrl、services。公开详情仍用 `/api/public/cases/:id`，保持既有分享路径和发布状态校验。
 
 官网配置短缓存2分钟，切页按需加载相关数据；小程序配置同样短缓存2分钟，下拉刷新绕过缓存。新小程序首页用home，案例列表分页追加，详情独立读取；关于我们、平台页和名片不再请求全部案例。必须先部署新服务端，再上传小程序新版。旧开发版依赖的全量接口已删除，服务端升级后必须更新小程序代码；不可继续使用旧开发版。
+
+后台配置缓存2分钟，切换菜单、案例翻页或素材筛选复用缓存；成功保存案例、公司、平台、分类或客户后立即失效并重新读取。磁盘容量首次进入读取，之后只在手动刷新、上传成功或删除素材成功时更新，不随切页重复请求；读取失败保留提示，由手动刷新重试。

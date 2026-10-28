@@ -1,4 +1,5 @@
-let storageInfo=null,storageError=false;
+let storageInfo=null,storageError=false,storageAttempted=false,storagePending=null;
+let configCache=null,configLoadedAt=0,configPending=null,configVersion=0;
 let adminRequest=0,adminLoading=false,adminError='',caseListPage={page:1,pageSize:20,total:0},mediaListPage={page:1,pageSize:24,total:0},mediaFilters={q:'',kind:''},pickerPage={page:1,pageSize:12,total:0},pickerFilters={q:''},pickerItems=[],pickerRequest=0,editRequest=0;
 let logState={items:[],total:0,page:1,pageSize:50,actions:{},loading:false,loaded:false,error:''},logFilters={from:'',to:'',action:'',result:''},logRequest=0;
 let session={},data={},view='cases',toastTimer,editingCase=null,gallery=[],pickerTarget='cover',teamMembers=[],teamExpanded=new Set(),filters={q:'',status:''};
@@ -7,15 +8,24 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const types={video:'视频',graphic:'图文',h5:'H5 / 小游戏',mixed:'整合案例'},statuses={draft:'草稿',published:'已发布',archived:'已下架'};
 const brand='<div class="brand"><small>MEDIA BANK</small><strong>银通联</strong></div>';
 function toast(value){const el=document.querySelector('#toast');el.textContent=value;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3500);}
-async function api(path,method='GET',body){const res=await fetch('/api/admin/'+path,{method,headers:{...(body?{'Content-Type':'application/json'}:{}),...(method!=='GET'&&session.csrf?{'X-CSRF-Token':session.csrf}:{})},...(body?{body:JSON.stringify(body)}:{})});const value=await res.json();if(!res.ok){if(res.status===401&&path!=='login'){session.authenticated=false;loginScreen();}throw Error(value.error||'操作失败');}return value;}
+async function api(path,method='GET',body){const res=await fetch('/api/admin/'+path,{method,headers:{...(body?{'Content-Type':'application/json'}:{}),...(method!=='GET'&&session.csrf?{'X-CSRF-Token':session.csrf}:{})},...(body?{body:JSON.stringify(body)}:{})});const value=await res.json();if(!res.ok){if(res.status===401&&path!=='login'){session.authenticated=false;invalidateAdminConfig();storageInfo=null;storageAttempted=false;loginScreen();}throw Error(value.error||'操作失败');}if(method!=='GET'){if(/^(cases|categories|clients|company|platforms)(\/|$)/.test(path))invalidateAdminConfig();if(['login','setup','logout'].includes(path)){invalidateAdminConfig();storageInfo=null;storageAttempted=false;}if(method==='DELETE'&&path.startsWith('uploads/'))await refreshStorage();}return value;}
+function invalidateAdminConfig(){configCache=null;configLoadedAt=0;configPending=null;configVersion++;}
+async function loadAdminConfig(){
+ if(configCache&&Date.now()-configLoadedAt<120000)return configCache;
+ if(configPending)return configPending;
+ const version=configVersion;
+ const pending=api('config').then(value=>{if(version!==configVersion)return loadAdminConfig();configCache=value;configLoadedAt=Date.now();return value;});
+ configPending=pending;
+ try{return await pending;}finally{if(configPending===pending)configPending=null;}
+}
 async function refresh(){
  const request=++adminRequest,current=view;adminLoading=true;adminError='';if(data.company)render();
  try{
   const query=new URLSearchParams(current==='media'?{...mediaFilters,page:mediaListPage.page,pageSize:24}:{...filters,page:caseListPage.page,pageSize:20});
-  const [meta,list]=await Promise.all([api('config'),current==='cases'?api('cases?'+query):current==='media'?api('uploads?'+query):Promise.resolve(null)]);
+  const [meta,list]=await Promise.all([loadAdminConfig(),current==='cases'?api('cases?'+query):current==='media'?api('uploads?'+query):Promise.resolve(null)]);
   if(request!==adminRequest)return;data={...meta,cases:current==='cases'?list.items:[],uploads:current==='media'?list.items:[]};
   if(current==='cases')caseListPage=list;if(current==='media')mediaListPage=list;
-  await refreshStorage();if(request!==adminRequest)return;
+  if(!storageAttempted)await refreshStorage();if(request!==adminRequest)return;
  }catch(err){if(request!==adminRequest)return;adminError=err.message;if(!data.company)throw err;}
  finally{if(request===adminRequest){adminLoading=false;if(session.authenticated&&data.company)render();}}
 }
@@ -27,7 +37,13 @@ function storagePanel(){
  const tips={normal:'',warning:'建议清理未使用的素材，或联系技术人员扩容。',critical:'请尽快清理素材或联系技术人员扩容，以免上传失败。'};
  return `<div class="disk-heading"><div><h2>服务器磁盘</h2><span class="disk-badge ${level}">${labels[level]}</span></div><button class="button secondary" type="button" data-refresh-storage>刷新容量</button></div><div class="disk-numbers"><div><small>总容量</small><strong>${formatCapacity(d.totalBytes)}</strong></div><div><small>已占用</small><strong>${formatCapacity(d.usedBytes)}</strong></div><div><small>可用空间</small><strong>${formatCapacity(d.availableBytes)}</strong></div></div><div class="disk-meter ${level}" role="progressbar" aria-label="磁盘占用" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent.toFixed(1)}"><span style="width:${percent}%"></span></div><p class="disk-note">已占用 ${percent.toFixed(1)}% · 包含系统、日志、素材及系统预留空间。${storageError?' 刷新失败，当前显示上次结果。':' 打开后台或点击刷新时更新。'}</p>${tips[level]?`<p class="disk-tip ${level}" role="status">${tips[level]}</p>`:''}`;
 }
-async function refreshStorage(){try{storageInfo=await api('storage');storageError=false;}catch{storageError=true;}const el=document.querySelector('#storage-status');if(el)el.innerHTML=storagePanel();}
+async function refreshStorage(){
+ if(storagePending)return storagePending;
+ storageAttempted=true;
+ const pending=(async()=>{try{storageInfo=await api('storage');storageError=false;}catch{storageError=true;}const el=document.querySelector('#storage-status');if(el)el.innerHTML=storagePanel();})();
+ storagePending=pending;try{await pending;}finally{if(storagePending===pending)storagePending=null;}
+}
+
 const client=id=>data.clients.find(x=>x.id===id)?.name||'未设置';
 const category=id=>data.categories.find(x=>x.id===id)?.name||'未设置';
 function field(label,name,value='',type='text',help='',extra=''){return `<label class="field"><span>${label}</span>${type==='textarea'?`<textarea name="${name}" ${extra}>${esc(value)}</textarea>`:`<input name="${name}" type="${type}" value="${esc(value)}" ${extra}>`}${help?`<small>${help}</small>`:''}</label>`;}
@@ -60,7 +76,7 @@ async function openPicker(target,page=1){
  document.querySelector('#picker-filter').addEventListener('submit',e=>{e.preventDefault();pickerFilters=Object.fromEntries(new FormData(e.target));openPicker(pickerTarget,1);});
  }catch(err){if(request!==pickerRequest||!picker.open)return;host.innerHTML=`<p class="error" role="alert">${esc(err.message)}</p><button class="button secondary" data-retry-picker>重新加载素材</button>`;}
 }
-function upload(file,progressId){return new Promise((resolve,reject)=>{if(!file){reject(Error('请选择文件'));return;}const max=file.type.startsWith('image/')?20:300;if(file.size>max*1024*1024){reject(Error(`文件不能超过${max}MB`));return;}const el=document.querySelector('#'+progressId);if(el)el.innerHTML='<div class="progress"><span style="width:0%"></span></div><div class="progress-text">准备上传…</div>';const xhr=new XMLHttpRequest();xhr.open('POST','/api/admin/uploads');xhr.setRequestHeader('X-CSRF-Token',session.csrf);xhr.setRequestHeader('X-File-Name',encodeURIComponent(file.name));xhr.setRequestHeader('Content-Type','application/octet-stream');xhr.upload.onprogress=e=>{if(e.lengthComputable&&el){const n=Math.round(e.loaded/e.total*100);el.querySelector('.progress span').style.width=n+'%';el.querySelector('.progress-text').textContent=`上传 ${n}% · ${file.name}`;}};xhr.onerror=()=>reject(Error('网络异常，上传未完成'));xhr.onload=()=>{let v;try{v=JSON.parse(xhr.responseText);}catch{reject(Error('服务响应异常'));return;}if(xhr.status>=200&&xhr.status<300){if(el)el.innerHTML=`<p class="progress-text success">${esc(file.name)} 上传完成</p>`;resolve(v);}else{if(el)el.innerHTML='';reject(Error(v.error||'上传失败'));}};xhr.send(file);});}
+function upload(file,progressId){return new Promise((resolve,reject)=>{if(!file){reject(Error('请选择文件'));return;}const max=file.type.startsWith('image/')?20:300;if(file.size>max*1024*1024){reject(Error(`文件不能超过${max}MB`));return;}const el=document.querySelector('#'+progressId);if(el)el.innerHTML='<div class="progress"><span style="width:0%"></span></div><div class="progress-text">准备上传…</div>';const xhr=new XMLHttpRequest();xhr.open('POST','/api/admin/uploads');xhr.setRequestHeader('X-CSRF-Token',session.csrf);xhr.setRequestHeader('X-File-Name',encodeURIComponent(file.name));xhr.setRequestHeader('Content-Type','application/octet-stream');xhr.upload.onprogress=e=>{if(e.lengthComputable&&el){const n=Math.round(e.loaded/e.total*100);el.querySelector('.progress span').style.width=n+'%';el.querySelector('.progress-text').textContent=`上传 ${n}% · ${file.name}`;}};xhr.onerror=()=>reject(Error('网络异常，上传未完成'));xhr.onload=async()=>{let v;try{v=JSON.parse(xhr.responseText);}catch{reject(Error('服务响应异常'));return;}if(xhr.status>=200&&xhr.status<300){if(el)el.innerHTML=`<p class="progress-text success">${esc(file.name)} 上传完成</p>`;await refreshStorage();resolve(v);}else{if(el)el.innerHTML='';reject(Error(v.error||'上传失败'));}};xhr.send(file);});}
 async function uploadFor(input){const target=input.dataset.uploadTarget;try{const form=document.querySelector('#case-form');form.querySelector('button[type=submit]').disabled=true;for(const file of input.files){const r=await upload(file,'upload-progress');data.uploads.unshift({id:r.id,filename:r.url.split('/').pop(),mime:r.mime,size:r.size,original_name:r.name});setMedia(target,r.url);}input.value='';}catch(e){toast(e.message);}finally{document.querySelector('#case-form')?.querySelector('button[type=submit]').removeAttribute('disabled');}}
 function openTaxonomy(table,id){const value=id?data[table].find(x=>x.id===id):{name:'',order:100,subtitle:'',description:'',services:[]};document.querySelector('#editor-content').innerHTML=`<h2>${id?'编辑':'新增'}${table==='categories'?'业务分类':'客户'}</h2><form id="taxonomy-form">${field('名称','name',value.name,'text','','required maxlength="80"')}${table==='categories'?field('副标题','subtitle',value.subtitle)+field('分类介绍','description',value.description,'textarea')+field('服务标签','services',value.services.join('、'),'text','使用顿号或逗号分隔。'):''}${field('排序','order',value.order,'number','','required')}<div id="taxonomy-error" role="alert"></div><div class="form-actions"><button type="button" class="button secondary" data-close-editor>取消</button><button class="button" type="submit">保存</button></div></form>`;editor.showModal();document.querySelector('#taxonomy-form').addEventListener('submit',async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(e.target));if(table==='categories')v.services=v.services.split(/[、,，]/).map(x=>x.trim()).filter(Boolean);v.order=Number(v.order);try{await api(table+(id?'/'+id:''),id?'PUT':'POST',v);editor.close();await refresh();toast('已保存');}catch(err){document.querySelector('#taxonomy-error').innerHTML=`<div class="error">${esc(err.message)}</div>`;}});}
 function syncTeamEditor(){document.querySelectorAll('[data-team-index]').forEach(el=>{const m=teamMembers[Number(el.dataset.teamIndex)];if(!m)return;el.querySelectorAll('[data-member-field]').forEach(input=>{m[input.dataset.memberField]=input.type==='checkbox'?input.checked:input.type==='number'?Number(input.value):input.value;});});}
