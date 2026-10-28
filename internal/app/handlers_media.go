@@ -79,6 +79,7 @@ func (a *Server) upload(w http.ResponseWriter, r *http.Request) error {
 	if original == "" || original == "." {
 		return bad(400, "请选择文件")
 	}
+	setAuditTarget(r, "", original)
 	id, err := newID()
 	if err != nil {
 		return err
@@ -131,6 +132,7 @@ func (a *Server) upload(w http.ResponseWriter, r *http.Request) error {
 		}
 		return err
 	}
+	setAuditTarget(r, id, original)
 	return respond(w, 201, map[string]any{"id": id, "url": "/media/" + filename, "mime": kind.MIME, "size": size, "name": original})
 }
 func mediaReferenced(c Case, url string) bool {

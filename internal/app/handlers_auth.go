@@ -157,6 +157,7 @@ func (a *Server) setup(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	auditLogin(r, v.Username, true)
 	return respond(w, 201, map[string]string{"csrf": csrf, "username": v.Username})
 }
 func (a *Server) login(w http.ResponseWriter, r *http.Request) error {
@@ -192,6 +193,7 @@ func (a *Server) login(w http.ResponseWriter, r *http.Request) error {
 	if err = decode(w, r, &v); err != nil {
 		return err
 	}
+	auditLogin(r, v.Username, false)
 	a.authMu.Lock()
 	defer a.authMu.Unlock()
 	user, err := a.currentAdmin()
@@ -204,6 +206,7 @@ func (a *Server) login(w http.ResponseWriter, r *http.Request) error {
 	if v.Username != user.Username || !verifyPassword(v.Password, user.Password) {
 		return bad(401, "账号或密码不正确")
 	}
+	auditLogin(r, user.Username, true)
 	a.limitMu.Lock()
 	delete(a.attempts, host)
 	a.limitMu.Unlock()

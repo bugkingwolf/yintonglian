@@ -109,6 +109,7 @@ func (a *Server) routes() {
 	a.route("POST /api/admin/password", true, a.changePassword)
 	a.route("GET /api/admin/content", true, a.adminContent)
 	a.route("GET /api/admin/storage", true, a.storageStatus)
+	a.route("GET /api/admin/operation-logs", true, a.operationLogs)
 	a.route("POST /api/admin/cases", true, a.saveCase)
 	a.route("PUT /api/admin/cases/{id}", true, a.saveCase)
 	a.route("DELETE /api/admin/cases/{id}", true, a.deleteCase)
@@ -126,7 +127,7 @@ func (a *Server) routes() {
 	a.route("GET /", false, a.static)
 }
 func (a *Server) route(pattern string, protected bool, h handler) {
-	a.mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+	a.mux.HandleFunc(pattern, a.auditHandler(pattern, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
 		if protected {
 			if r.Method != "GET" && r.Method != "HEAD" {
@@ -139,11 +140,21 @@ func (a *Server) route(pattern string, protected bool, h handler) {
 				return
 			}
 			r = r.WithContext(context.WithValue(r.Context(), sessionKey{}, s))
+			if m, ok := r.Context().Value(auditKey{}).(*auditMetadata); ok {
+				user, err := a.currentAdmin()
+				if err != nil {
+					writeError(w, err)
+					return
+				}
+				m.Username = user.Username
+				m.Authenticated = true
+				a.auditTargetBefore(r)
+			}
 		}
 		if err := h(w, r); err != nil {
 			writeError(w, err)
 		}
-	})
+	}))
 }
 func (a *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Content-Type-Options", "nosniff")

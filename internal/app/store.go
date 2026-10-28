@@ -84,6 +84,10 @@ func OpenStore(dataDir string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
+	if err = orm.AutoMigrate(&OperationLog{}); err != nil {
+		db.Close()
+		return nil, err
+	}
 	var count int64
 	if err = orm.Table("settings").Where("id = ?", "initialized").Count(&count).Error; err != nil {
 		db.Close()

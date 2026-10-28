@@ -81,6 +81,7 @@ func (a *Server) normalizeCase(ctx context.Context, c Case, id string) (Case, er
 }
 func (a *Server) saveCase(w http.ResponseWriter, r *http.Request) error {
 	id := r.PathValue("id")
+	oldStatus := ""
 	var err error
 	if r.Method == "POST" {
 		id, err = newID()
@@ -91,13 +92,20 @@ func (a *Server) saveCase(w http.ResponseWriter, r *http.Request) error {
 		if !idPattern.MatchString(id) {
 			return bad(404, "案例不存在")
 		}
-		if _, err = getRow[Case](a.Store.DB, "cases", id); err != nil {
+		old, e := getRow[Case](a.Store.DB, "cases", id)
+		err = e
+		if err != nil {
 			return recordError(err, "案例不存在")
 		}
+		oldStatus = old.Status
 	}
 	var value Case
 	if err = decode(w, r, &value); err != nil {
 		return err
+	}
+	setAuditTarget(r, id, value.Title)
+	if r.Method == "PUT" {
+		auditCaseStatus(r, oldStatus, value.Status)
 	}
 	value, err = a.normalizeCase(r.Context(), value, id)
 	if err != nil {

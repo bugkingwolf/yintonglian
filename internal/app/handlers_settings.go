@@ -32,6 +32,7 @@ func (a *Server) saveTaxonomy(table string) handler {
 				return err
 			}
 			c.ID = id
+			setAuditTarget(r, id, c.Name)
 			if c.Name, err = clean(c.Name, 80); err != nil {
 				return err
 			}
@@ -57,6 +58,7 @@ func (a *Server) saveTaxonomy(table string) handler {
 				return err
 			}
 			c.ID = id
+			setAuditTarget(r, id, c.Name)
 			if c.Name, err = clean(c.Name, 80); err != nil {
 				return err
 			}
@@ -100,6 +102,7 @@ func (a *Server) saveCompany(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	previousMembers := c.TeamMembers
 	fields := map[string]*string{"name": &c.Name, "english": &c.English, "legalName": &c.LegalName, "headline": &c.Headline, "slogan": &c.Slogan, "introduction": &c.Introduction, "vision": &c.Vision, "philosophy": &c.Philosophy, "team": &c.Team, "qualifications": &c.Qualifications, "phone": &c.Phone, "email": &c.Email, "address": &c.Address, "contactNote": &c.ContactNote, "founded": &c.Founded}
 	for key, ptr := range fields {
 		raw, ok := changes[key]
@@ -226,6 +229,7 @@ func (a *Server) saveCompany(w http.ResponseWriter, r *http.Request) error {
 			return bad(400, "精选数量需为1至12")
 		}
 	}
+	auditCompanyMembers(r, previousMembers, c.TeamMembers)
 	if err = putRow(a.Store.DB, "settings", c); err != nil {
 		return err
 	}
