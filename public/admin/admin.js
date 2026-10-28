@@ -84,6 +84,8 @@ async function loadOperationLogs(page=1){
  finally{if(request===logRequest){logState.loading=false;if(view==='logs'&&session.authenticated)render();}}
 }
 function bindPage(){
+ // Loading and error panels do not contain the view's form controls.
+ if(adminLoading||adminError)return;
  if(view==='logs'){
   document.querySelector('#log-filter')?.addEventListener('submit',e=>{e.preventDefault();logFilters=Object.fromEntries(new FormData(e.target));loadOperationLogs(1);});
   if(!logState.loaded&&!logState.loading)loadOperationLogs(1);
